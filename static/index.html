@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ff6b35" />
+  <title>Sales CRM</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <!-- Top bar (desktop navigation) -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#/dashboard" aria-label="Sales CRM home">
+        <span class="brand-mark">S</span>
+        <span class="brand-text">Sales CRM <small>FreeBees</small></span>
+      </a>
+      <nav class="top-nav" aria-label="Main">
+        <a href="#/dashboard" data-nav="dashboard">Dashboard</a>
+        <a href="#/activities" data-nav="activities">Activities</a>
+      </nav>
+            <button type="button" class="btn btn-primary btn-add" data-open-form>+ Add activity</button>
+
+      <!-- User menu (demo user, no login) -->
+      <div class="user-menu">
+        <button type="button" class="user-btn" id="user-btn" aria-label="Account menu"
+                aria-haspopup="true" aria-expanded="false" aria-controls="user-panel">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+        </button>
+        <div class="user-panel" id="user-panel" hidden>
+          <div class="user-head">
+            <div class="user-avatar" id="user-avatar"></div>
+            <div>
+              <p class="user-name" id="user-name"></p>
+              <p class="subtle" id="user-role"></p>
+            </div>
+          </div>
+          <dl class="user-details">
+            <div><dt>Email</dt><dd id="user-email"></dd></div>
+            <div><dt>Phone</dt><dd id="user-phone"></dd></div>
+            <div><dt>Region</dt><dd id="user-region"></dd></div>
+            <div><dt>Employee ID</dt><dd id="user-id"></dd></div>
+          </dl>
+          <button type="button" class="btn btn-ghost btn-logout" id="logout-btn">Log out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- ============ DASHBOARD ============ -->
+    <section id="view-dashboard" class="view" aria-labelledby="dash-title">
+      <div class="page-head">
+        <div>
+          <h1 id="dash-title">Dashboard</h1>
+          <p class="subtle" id="dash-date"></p>
+        </div>
+        <div class="segmented" id="period-seg" role="group" aria-label="Time period">
+          <button type="button" data-period="today" aria-pressed="false">Today</button>
+          <button type="button" data-period="week" aria-pressed="false">Week</button>
+          <button type="button" data-period="month" aria-pressed="false">Month</button>
+          <button type="button" data-period="all" aria-pressed="true">All</button>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><span class="kpi-dot dot-total"></span><p class="kpi-label">Total activities</p><p class="kpi-value" id="kpi-total">0</p></div>
+        <div class="kpi"><span class="kpi-dot dot-pending"></span><p class="kpi-label">Pending</p><p class="kpi-value" id="kpi-pending">0</p></div>
+        <div class="kpi"><span class="kpi-dot dot-progress"></span><p class="kpi-label">In progress</p><p class="kpi-value" id="kpi-progress">0</p></div>
+        <div class="kpi"><span class="kpi-dot dot-completed"></span><p class="kpi-label">Completed</p><p class="kpi-value" id="kpi-completed">0</p></div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="col">
+          <section class="card" aria-labelledby="trend-title">
+            <div class="card-head">
+              <h2 id="trend-title">Last 7 days</h2>
+              <span class="subtle" id="trend-total"></span>
+            </div>
+            <div class="trend" id="trend" role="img" aria-label="Activities logged per day over the last 7 days"></div>
+          </section>
+
+          <section class="card" aria-labelledby="recent-title">
+            <div class="card-head">
+              <h2 id="recent-title">Recent activity</h2>
+              <a class="link" href="#/activities">View all</a>
+            </div>
+            <div id="recent-list"></div>
+          </section>
+        </div>
+
+        <div class="col">
+          <section class="card" aria-labelledby="rate-title">
+            <div class="card-head"><h2 id="rate-title">Completion rate</h2></div>
+            <p class="rate"><span id="rate-value">0</span><small>%</small></p>
+            <div class="progress" aria-hidden="true"><div class="progress-fill" id="rate-fill"></div></div>
+            <p class="subtle">Share of activities marked completed.</p>
+          </section>
+          <section class="card" aria-labelledby="perf-title">
+            <div class="card-head"><h2 id="perf-title">Time to complete</h2></div>
+            <p class="rate"><span id="perf-avg">&ndash;</span><small id="perf-unit"></small></p>
+            <div class="perf-meta">
+              <div><strong id="perf-fastest">&ndash;</strong>Fastest</div>
+              <div><strong id="perf-slowest">&ndash;</strong>Slowest</div>
+            </div>
+            <p class="subtle" id="perf-note"></p>
+          </section>
+
+          <section class="card" aria-labelledby="type-title">
+            <div class="card-head"><h2 id="type-title">By activity type</h2></div>
+            <div id="by-type"></div>
+          </section>
+
+          <section class="card" aria-labelledby="product-title">
+            <div class="card-head"><h2 id="product-title">Product interest</h2></div>
+            <div id="by-product"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ACTIVITIES ============ -->
+    <section id="view-activities" class="view" aria-labelledby="act-title" hidden>
+      <div class="page-head">
+        <div>
+          <h1 id="act-title">Activities</h1>
+          <p class="subtle" id="list-count"></p>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <input type="search" id="search" placeholder="Search by name" aria-label="Search by name" />
+        <select id="list-period" aria-label="Time period">
+          <option value="all">All time</option>
+          <option value="today">Today</option>
+          <option value="week">This week</option>
+          <option value="month">This month</option>
+        </select>
+      </div>
+      <div class="chips-filter" id="status-chips" role="group" aria-label="Filter by status">
+        <button type="button" data-status="" aria-pressed="true">All</button>
+        <button type="button" data-status="Pending" aria-pressed="false">Pending</button>
+        <button type="button" data-status="In Progress" aria-pressed="false">In progress</button>
+        <button type="button" data-status="Completed" aria-pressed="false">Completed</button>
+      </div>
+
+      <div id="activity-list" class="list-wrap" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <!-- Bottom navigation (mobile) -->
+  <nav class="bottom-nav" aria-label="Main">
+    <a href="#/dashboard" data-nav="dashboard">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+      <span>Dashboard</span>
+    </a>
+    <button type="button" class="fab" data-open-form aria-label="Add activity">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+    <a href="#/activities" data-nav="activities">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
+      <span>Activities</span>
+    </a>
+  </nav>
+
+  <!-- ============ ADD ACTIVITY (modal / bottom sheet) ============ -->
+  <dialog id="sheet" class="sheet" aria-labelledby="sheet-title">
+    <div class="sheet-body">
+      <div class="sheet-head">
+        <h2 id="sheet-title">Add activity</h2>
+        <button type="button" class="icon-btn" id="sheet-close" aria-label="Close">&times;</button>
+      </div>
+
+      <form id="activity-form" novalidate>
+        <label for="customer_name">Customer / restaurant name <span class="req">*</span></label>
+        <input type="text" id="customer_name" maxlength="120" placeholder="Spice Garden" autocomplete="off" />
+        <p class="field-error" id="err-customer_name"></p>
+        
+
+        <div class="row">
+          <div>
+            <label for="activity_type">Activity type <span class="req">*</span></label>
+            <select id="activity_type">
+              <option value="">Select type</option>
+              <option>Call</option>
+              <option>Visit</option>
+              <option>Demo</option>
+              <option>Follow-up</option>
+            </select>
+            <p class="field-error" id="err-activity_type"></p>
+          </div>
+          <div>
+            <label for="status">Status <span class="req">*</span></label>
+            <select id="status">
+              <option value="">Select status</option>
+              <option>Pending</option>
+              <option>In Progress</option>
+              <option>Completed</option>
+            </select>
+            <p class="field-error" id="err-status"></p>
+            <p class="field-hint" id="status-hint"></p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="start_date">Start date <span class="req">*</span></label>
+            <input type="date" id="start_date" />
+            <p class="field-error" id="err-start_date"></p>
+            <p class="field-hint">The day you actually did the visit / call.</p>
+          </div>
+          <div>
+            <label for="end_date">End date</label>
+            <input type="date" id="end_date" />
+            <p class="field-error" id="err-end_date"></p>
+            <p class="field-hint" id="end-hint"></p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="contact">Contact number</label>
+            <input type="tel" id="contact" maxlength="20" placeholder="9876543210" />
+            <p class="field-error" id="err-contact"></p>
+          </div>
+          <div>
+            <label for="location">Location</label>
+            <input type="text" id="location" maxlength="120" placeholder="Indiranagar" />
+          </div>
+        </div>
+
+        <label for="product_interested">Product interested in</label>
+        <select id="product_interested">
+          <option value="">Not specified</option>
+          <option>FreeBees-Menu</option>
+          <option>FreeBees-Play</option>
+          <option>Both</option>
+        </select>
+
+        <label for="notes">Notes / outcome</label>
+        <textarea id="notes" rows="3" maxlength="500" placeholder="What happened? What's next?"></textarea>
+
+        <p id="form-message" class="message" role="alert"></p>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" id="cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="submit-btn">Save activity</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+    <!-- Shown after "Log out" (demo only) -->
+  <div class="logged-out" id="logged-out" hidden>
+    <div class="logged-out-card">
+      <span class="brand-mark">S</span>
+      <h1>You have been logged out</h1>
+      <p class="subtle">Thanks for using Sales CRM.</p>
+      <button type="button" class="btn btn-primary" id="login-again-btn">Log in again</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
