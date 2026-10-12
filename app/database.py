@@ -1,4 +1,4 @@
-"""Database connection. SQLite by default; set DATABASE_URL to use MySQL/PostgreSQL."""
+"""Database connection."""
 import os
 
 from sqlalchemy import create_engine

@@ -1,6 +1,5 @@
 // =====================================================================
 // Sales CRM frontend (plain JavaScript, no build step)
-// All user text is rendered with textContent, never innerHTML (XSS-safe).
 // =====================================================================
 
 // ---------- Helpers ----------
@@ -77,7 +76,7 @@ function showToast(message, type) {
 // ---------- State ----------
 const state = { view: "dashboard", period: "all", listPeriod: "all", status: "", search: "" };
 
-// Demo user (there is no login). Change these details to whatever you want to show.
+// Demo user (there is no login). 
 const DEFAULT_USER = {
   name: "Demo User",
   role: "Sales Executive",
