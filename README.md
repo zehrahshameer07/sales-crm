@@ -1,134 +1,147 @@
-# Sales CRM (FreeBees)
+# Sales CRM – FreeBees
 
-A simple, mobile-friendly Sales CRM for logging and viewing daily sales activities for restaurant customers.
-Built as a small end-to-end application: dashboard, form, REST API and database.
+A simple, mobile-friendly Sales CRM for recording and tracking daily sales activities related to restaurant customers.
 
-![Dashboard](docs/screenshots/dashboard.png)
+The application includes a dashboard, activity management form, REST API, and database integration.
 
-| Activities | Add / edit form (mobile) |
-|---|---|
-| ![Activities](docs/screenshots/activities.png) | ![Form](docs/screenshots/form-mobile.png) |
+![Sales CRM Dashboard](docs/screenshots/dashboard.png)
+
+| Activities                                     | Add / Edit Form                                  |
+| ---------------------------------------------- | ------------------------------------------------ |
+| ![Activities](docs/screenshots/activities.png) | ![Mobile Form](docs/screenshots/form-mobile.png) |
 
 ## Features
-- **Dashboard:** KPI cards (Total, Pending, In progress, Completed), completion rate, activities per day for the last 7 days, breakdown by activity type and product interest, a **time-to-complete** card (average / fastest / slowest days) and a recent-activity list
-- Period filter on the dashboard: Today / Week / Month / All (based on the activity **start date**)
-- **Add and edit activities** (modal on desktop, bottom sheet on mobile): customer/restaurant name, activity type, status, start date, notes, plus optional end date, contact number, location and product interested in
-- **Start date can be backdated** (for example, a visit made yesterday and logged today); the **end date** is optional and set when an activity is completed
-- **Status rules:** status only moves forward (Pending, then In Progress, then Completed). A completed activity's status is locked. The server enforces this, not just the UI
-- **Activities page:** full list (newest start date first) with name search, status filter and period filter
-- Validation in the browser and on the server, with errors shown next to the right field
-- Mobile-first responsive layout: bottom navigation and a floating add button on phones, top navigation on desktop
-- User menu with a demo profile and a logout button (demo only, see "Login" below)
-- Automated API tests (pytest)
 
-## Tech stack
-| Layer | Choice |
-|---|---|
-| Frontend | HTML, CSS, vanilla JavaScript (served by the backend, no build step) |
-| Backend | Python, FastAPI |
-| ORM / validation | SQLAlchemy, Pydantic |
-| Database | SQLite by default; MySQL/PostgreSQL via `DATABASE_URL` |
+* Dashboard with activity counts, completion rate, charts, and recent activities.
+* Add, view, and edit sales activities.
+* Search by customer name and filter by status or date period.
+* Track Calls, Visits, Demos, and Follow-ups.
+* Record start dates, notes, and optional contact details, location, product interest, and end dates.
+* Validate inputs on both the frontend and backend.
+* Enforce activity status and date rules on the server.
+* Responsive layout for desktop and mobile.
+* Automated API tests using pytest.
 
-## Project structure
-```
-sales-crm/
-├── app/
-│   ├── main.py       # API routes + serves the frontend
-│   ├── crud.py       # database queries and business rules
-│   ├── models.py     # table definition
-│   ├── schemas.py    # validation rules and response shapes
-│   └── database.py   # DB connection (configurable)
-├── static/           # index.html, style.css, app.js
-├── tests/            # pytest API tests
-├── docs/             # schema.sql and screenshots
-├── seed.py           # optional demo data
-├── migrate.py        # upgrades an older crm.db (see below)
-├── requirements.txt
-└── README.md
-```
+## Tech Stack
 
-## Setup and run
+| Layer              | Technology            |
+| ------------------ | --------------------- |
+| Frontend           | HTML, CSS, JavaScript |
+| Backend            | Python, FastAPI       |
+| ORM and validation | SQLAlchemy, Pydantic  |
+| Database           | SQLite                |
+
+## Getting Started
+
+### 1. Clone the repository
+
 ```bash
 git clone https://github.com/zehrahshameer07/sales-crm.git
 cd sales-crm
+```
+
+### 2. Create and activate a virtual environment
+
+```bash
 python -m venv venv
-venv\Scripts\activate            # Windows   (Mac/Linux: source venv/bin/activate)
+```
+
+On Windows PowerShell:
+
+```powershell
+venv\Scripts\Activate.ps1
+```
+
+On macOS/Linux:
+
+```bash
+source venv/bin/activate
+```
+
+### 3. Install dependencies
+
+```bash
 pip install -r requirements.txt
-python seed.py                   # optional: add demo data
+```
+
+### 4. Run the application
+
+```bash
 uvicorn app.main:app --reload
 ```
-Open http://127.0.0.1:8000  (interactive API docs: http://127.0.0.1:8000/docs)
 
-The SQLite file `crm.db` and the table are created automatically on first run.
+Open the application at http://127.0.0.1:8000.
 
-### Run tests
+The SQLite database and tables are created automatically when the application starts. To add sample activities, run `python seed.py` in a separate terminal with the virtual environment activated.
+
+### 5. Run the tests
+
 ```bash
 pytest
 ```
 
-### Login / demo credentials
-There is **no login** in this version, as agreed in the revised scope, so no credentials are needed.
-The user icon in the header shows a static demo profile ("Demo User") with a logout button for demonstration only. It stores nothing.
+Interactive API documentation is available at http://127.0.0.1:8000/docs.
 
-## API
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/api/activities` | Create an activity (201; 422 for invalid data; 400 if a business rule is broken) |
-| GET | `/api/activities` | List activities, newest start date first. Query: `period` (today/week/month/all), `status`, `search` |
-| PATCH | `/api/activities/{id}` | Edit an activity or change its status. Send only the fields that changed (404 if not found; 400 if a rule is broken) |
-| GET | `/api/stats` | Dashboard data: status counts, completion rate, time-to-complete, counts by type and product, last 7 days. Query: `period` |
+## API Endpoints
 
-Example request:
-```json
-POST /api/activities
-{
-  "customer_name": "Spice Garden",
-  "activity_type": "Visit",
-  "status": "Pending",
-  "start_date": "2026-10-11",
-  "contact": "9876543210",
-  "location": "Indiranagar",
-  "product_interested": "FreeBees-Menu",
-  "notes": "Owner liked the video menu"
-}
+| Method | Endpoint               | Purpose                        |
+| ------ | ---------------------- | ------------------------------ |
+| POST   | `/api/activities`      | Create an activity             |
+| GET    | `/api/activities`      | Retrieve and filter activities |
+| PATCH  | `/api/activities/{id}` | Edit an activity               |
+| GET    | `/api/stats`           | Retrieve dashboard statistics  |
+
+## Business Rules
+
+* Activity status progresses from Pending to In Progress to Completed.
+* Completed activities cannot be reopened.
+* Start dates can be backdated but cannot be in the future.
+* End dates are optional and apply only to completed activities.
+* The server validates inputs and enforces business rules.
+
+## Project Structure
+
+```text
+sales-crm/
+├── app/
+│   ├── main.py
+│   ├── crud.py
+│   ├── models.py
+│   ├── schemas.py
+│   └── database.py
+├── static/
+├── tests/
+├── docs/
+│   ├── schema.sql
+│   └── screenshots/
+├── seed.py
+├── requirements.txt
+└── README.md
 ```
 
-### Business rules (enforced by the server)
-- Status can only move forward: Pending, then In Progress, then Completed. Completed cannot be changed back.
-- Start date defaults to today, can be backdated, and cannot be in the future.
-- End date is optional, only allowed on completed activities, cannot be before the start date or in the future. Completing an activity without an end date sets it to today.
+## Database Schema
 
-## Database schema: `activities`
-The full SQL is in [`docs/schema.sql`](docs/schema.sql).
+The application uses SQLite. The SQL schema is available in [`docs/schema.sql`](docs/schema.sql).
 
-| Column | Type | Rules |
-|---|---|---|
-| id | Integer | Primary key, auto-generated |
-| customer_name | String(120) | Required, 2-120 characters |
-| activity_type | String(30) | Required: Call, Visit, Demo, Follow-up |
-| status | String(30) | Required: Pending, In Progress, Completed |
-| contact | String(20) | Optional, valid phone format |
-| location | String(120) | Optional |
-| product_interested | String(30) | Optional: FreeBees-Menu, FreeBees-Play, Both |
-| notes | Text | Optional, max 500 characters |
-| start_date | Date | Required, defaults to today, not in the future |
-| end_date | Date | Optional, completed activities only |
-| created_at | DateTime | Set automatically when the record is logged |
+The `activities` table stores the customer name, activity type, status, contact details, location, product interest, notes, start date, end date, and record creation time.
 
-## Approach and design decisions
-- **Layered backend:** routes (`main.py`) call query functions (`crud.py`), which use models (`models.py`). Validation lives in `schemas.py`. Each concern can change without touching the others.
-- **Validation twice:** the browser gives instant feedback; the server is the real safety check. Bad formats are rejected with 422 and broken business rules with 400.
-- **Rules live on the server:** the status and date rules are in `crud.py`, so they hold no matter what client calls the API. The UI only mirrors them for convenience.
-- **Dates, not timestamps:** salespeople often log work a day later, so activities have an explicit start date. The dashboard uses it, and start-to-end time gives a simple measure of how fast an activity is converted.
-- **Dashboard data comes from one endpoint:** `GET /api/stats` aggregates in the database, so the browser never downloads every record to count them.
-- **Single deployable:** FastAPI serves the API and the frontend, so there is one command to run and no CORS configuration.
-- **XSS-safe rendering:** user text is rendered with `textContent`, never `innerHTML`.
-- **Extensible:** changing the database is one environment variable; new fields or endpoints follow the same model, schema, crud, route pattern.
-- **Tested:** 25 API tests cover creation, validation, filters, editing, status rules, dates and stats.
-- **Scope:** a single-user app with no login, as agreed in the revised scope.
+## Implementation Approach
 
-## Possible next steps
-- Login and roles (admin / salesperson), with each activity linked to its salesperson, so time-to-complete can be compared per person
-- Separate `customers` table so one restaurant has many activities
-- Delete activities, pagination
-- Follow-up reminders, reports and CSV export
+* **Layered backend:** API routes, database operations, models, and validation schemas are separated into modules.
+* **Server-side validation:** Business rules are enforced by the backend rather than relying only on the frontend.
+* **Database-driven dashboard:** Statistics are provided through the dashboard API.
+* **Single application:** FastAPI serves both the API and frontend, so no separate frontend build step is required.
+* **Safer rendering:** User-provided text is rendered using `textContent` rather than `innerHTML`.
+
+## Scope and Limitations
+
+This version focuses on activity management, dashboard statistics, API functionality, and database integration.
+
+It does not currently include authentication or separate admin and salesperson accounts. The profile and logout controls are demonstration-only.
+
+## Future Improvements
+
+* Authentication and role-based access.
+* Assign activities to individual salespeople.
+* Follow-up reminders, reports, and CSV export.
+* Pagination and database migrations.
