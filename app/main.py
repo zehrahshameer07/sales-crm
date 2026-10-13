@@ -1,4 +1,5 @@
 """API routes + serves the frontend."""
+import os
 from pathlib import Path
 from typing import List, Literal, Optional
 
@@ -7,13 +8,17 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
-from . import crud, schemas
+from . import crud, demo_data, schemas
 from .database import Base, engine, get_db
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Create tables on startup if they don't exist yet
 Base.metadata.create_all(bind=engine)
+
+# For a deployed demo: set SEED_DEMO=true to fill an empty database with sample activities
+if os.getenv("SEED_DEMO", "").lower() == "true":
+    demo_data.seed_if_empty()
 
 app = FastAPI(title="Sales CRM API", version="1.0.0")
 
