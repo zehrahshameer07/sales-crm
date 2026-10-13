@@ -16,6 +16,7 @@ The application includes a dashboard, activity management form, REST API, and da
 * Add, view, and edit sales activities.
 * Search by customer name and filter by status or date period.
 * Track Calls, Visits, Demos, and Follow-ups.
+* Dashboard "Time to complete" card showing average, fastest and slowest days from start date to end date.
 * Record start dates, notes, and optional contact details, location, product interest, and end dates.
 * Validate inputs on both the frontend and backend.
 * Enforce activity status and date rules on the server.
