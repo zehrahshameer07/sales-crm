@@ -2,7 +2,7 @@
 
 A mobile-friendly Sales CRM where salespeople record their daily activities (calls, visits, demos, follow-ups) for restaurants, managers track their team's progress, and admins manage people and monitor everything.
 
-**Live demo:** _add your Render URL here_  
+**Live Demo:** https://sales-crm-qfdc.onrender.com
 *(Free hosting: the first load after inactivity can take about a minute while the server wakes up.)*
 
 | Manager dashboard | Phone |
