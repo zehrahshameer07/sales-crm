@@ -4,8 +4,7 @@ Generated from the SQLAlchemy models by `python scripts/make_er_diagram.py`, so 
 
 ![ER diagram](er-diagram.png)
 
-## Interactive version (GitHub renders this automatically)
-
+## Interactive version 
 ```mermaid
 erDiagram
   USERS ||--o{ USERS : "manager_id"
@@ -63,15 +62,7 @@ erDiagram
   }
 ```
 
-## Other tools
 
-| Tool | How to use it with this project |
-|---|---|
-| [dbdiagram.io](https://dbdiagram.io) | Paste the contents of `docs/schema.dbml`, then drag tables around and export PNG/PDF |
-| [DBeaver](https://dbeaver.io) (free) | Connect to the database, right-click the schema, *View Diagram* |
-| pgAdmin (free) | Right-click the database, *ERD Tool*, then generate it from the existing database |
-| [SchemaSpy](https://schemaspy.org) | Point it at the PostgreSQL database to get a browsable HTML report |
-| [drawSQL](https://drawsql.app) / [ChartDB](https://chartdb.io) | Import `docs/schema.sql` |
 
 ## Reading the diagram
 
