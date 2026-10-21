@@ -32,7 +32,6 @@ export function renderLogin(root, { onLoggedIn, notice }) {
   const demo = state.config.demo_accounts || [];
   const demoBox = demo.length ? h("div", { class: "demo-box" },
     h("div", { class: "small strong", text: "Demo accounts" }),
-    h("div", { class: "tiny muted", text: state.config.demo_note || "" }),
     demo.map((a) => h("button", { class: "demo-btn", type: "button", on: { click: () => { email.value = a.email; password.value = a.password; password.focus(); } } },
       h("span", {}, h("span", { class: "strong", text: a.role[0].toUpperCase() + a.role.slice(1) }), h("span", { class: "tiny muted", text: ` · ${a.email}` })),
       h("span", { class: "tiny", text: "Fill in" })))) : null;
