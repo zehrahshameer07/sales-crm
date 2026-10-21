@@ -1,0 +1,81 @@
+Enum user_role {
+  admin
+  manager
+  salesperson
+}
+
+Enum activity_type {
+  call
+  visit
+  demo
+  follow_up
+}
+
+Enum activity_status {
+  pending
+  in_progress
+  completed
+}
+
+Enum product {
+  freebees_menu
+  freebees_play
+  both
+}
+
+Table users {
+  id uuid [pk]
+  full_name varchar(120) [not null]
+  email varchar(254) [not null, unique]
+  phone varchar(20)
+  password_hash varchar(255) [not null]
+  role user_role [not null]
+  manager_id uuid
+  designation varchar(80)
+  region varchar(80)
+  employee_code varchar(30) [unique]
+  is_active boolean [not null]
+  must_change_password boolean [not null]
+  failed_login_attempts int [not null]
+  locked_until timestamptz
+  last_login_at timestamptz
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table activities {
+  id uuid [pk]
+  owner_id uuid [not null]
+  customer_name varchar(120) [not null]
+  customer_key varchar(120) [not null]
+  activity_type activity_type [not null]
+  status activity_status [not null]
+  product_interested product
+  contact varchar(20)
+  location varchar(120)
+  notes text
+  start_date date [not null]
+  end_date date
+  follow_up_date date
+  follow_up_notes varchar(500)
+  created_by_id uuid
+  updated_by_id uuid
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table status_history {
+  id uuid [pk]
+  activity_id uuid [not null]
+  changed_by_id uuid
+  from_status activity_status
+  to_status activity_status [not null]
+  changed_at timestamptz [not null]
+}
+
+Ref: users.manager_id > users.id
+Ref: activities.created_by_id > users.id
+Ref: activities.updated_by_id > users.id
+Ref: activities.owner_id > users.id
+Ref: status_history.activity_id > activities.id
+Ref: status_history.changed_by_id > users.id
