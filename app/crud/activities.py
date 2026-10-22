@@ -145,21 +145,38 @@ def can_edit(user: User, activity: Activity) -> bool:
     return activity.owner_id == user.id and activity.status != ActivityStatus.COMPLETED
 
 
+
+
 def can_change_status(user: User, activity: Activity) -> bool:
     if user.role == UserRole.ADMIN:
         return True
+
+    # Completed activities are final for non-admin users.
+    if activity.status == ActivityStatus.COMPLETED:
+        return False
+
+    if user.role == UserRole.SALESPERSON:
+        return activity.owner_id == user.id
+
     if user.role == UserRole.MANAGER:
-        # A manager approves their team's work, not their own
-        return activity.owner_id != user.id and activity.owner.manager_id == user.id
+        return (
+            activity.owner_id != user.id
+            and activity.owner.manager_id == user.id
+        )
+
     return False
 
 
 def permissions_for(user: User, activity: Activity) -> schemas.ActivityPermissions:
     return schemas.ActivityPermissions(
         can_edit=can_edit(user, activity),
-        can_change_status=can_change_status(user, activity) and activity.status != ActivityStatus.COMPLETED,
-        can_set_end_date=user.role == UserRole.ADMIN and activity.status == ActivityStatus.COMPLETED,
+        can_change_status=can_change_status(user, activity),
+        can_set_end_date=(
+            user.role == UserRole.ADMIN
+            and activity.status == ActivityStatus.COMPLETED
+        ),
     )
+
 
 
 def serialize(user: User, activity: Activity) -> schemas.ActivityOut:
@@ -226,8 +243,11 @@ def _log(db: Session, activity: Activity, by: User, old: Optional[ActivityStatus
     db.add(StatusHistory(activity=activity, changed_by_id=by.id, from_status=old, to_status=new))
 
 
-# ------------------------------------------------------------------ CRUD
+
 def create_activity(db: Session, user: User, data: schemas.ActivityCreate) -> Activity:
+    if user.role != UserRole.ADMIN and data.status != ActivityStatus.PENDING:
+        raise forbidden("Only admins can choose an initial activity status.")
+
     owner = user
     if data.owner_id and data.owner_id != user.id:
         if user.role != UserRole.ADMIN:
@@ -237,7 +257,12 @@ def create_activity(db: Session, user: User, data: schemas.ActivityCreate) -> Ac
             raise invalid("The selected salesperson does not exist or is deactivated.")
 
     start = data.start_date or business_today()
-    _check_dates(start, None, data.follow_up_date, ActivityStatus.PENDING)
+    initial_status = (
+        data.status if user.role == UserRole.ADMIN
+        else ActivityStatus.PENDING
+    )
+
+    _check_dates(start, None, data.follow_up_date, initial_status)
 
     if _find_duplicate(db, owner.id, data.customer_name, data.activity_type, start):
         raise conflict(_duplicate_message(data.customer_name, data.activity_type, start))
@@ -246,7 +271,7 @@ def create_activity(db: Session, user: User, data: schemas.ActivityCreate) -> Ac
         owner_id=owner.id,
         customer_name=data.customer_name,
         activity_type=data.activity_type,
-        status=ActivityStatus.PENDING,        # always starts as pending
+        status=initial_status,
         product_interested=data.product_interested,
         contact=data.contact,
         location=data.location,
@@ -258,13 +283,16 @@ def create_activity(db: Session, user: User, data: schemas.ActivityCreate) -> Ac
         updated_by_id=user.id,
     )
     db.add(activity)
-    _log(db, activity, user, None, ActivityStatus.PENDING)
+    _log(db, activity, user, None, initial_status)
+
     try:
         db.commit()
-    except IntegrityError:        # two identical requests at the same moment: the database rule wins
+    except IntegrityError:
         db.rollback()
         raise conflict(_duplicate_message(data.customer_name, data.activity_type, start))
+
     return get_visible_activity(db, user, activity.id)
+
 
 
 def update_activity(db: Session, user: User, activity: Activity, data: schemas.ActivityUpdate) -> Activity:
@@ -306,17 +334,23 @@ def update_activity(db: Session, user: User, activity: Activity, data: schemas.A
     return get_visible_activity(db, user, activity.id)
 
 
+
 def change_status(db: Session, user: User, activity: Activity, data: schemas.StatusChangeIn) -> Activity:
     if not can_change_status(user, activity):
-        raise forbidden("Only an admin, or the salesperson's manager, can change the status.")
+        raise forbidden("You can only change the status of activities you're permitted to manage.")
 
     new = data.status
+
     if new == activity.status:
         raise conflict(f"This activity is already {new.value.replace('_', ' ')}.")
-    if new not in ALLOWED_STATUS_CHANGES[activity.status]:
+
+    # Admins can move to any valid status. Other roles must follow
+    # the sequential transition rules.
+    if user.role != UserRole.ADMIN and new not in ALLOWED_STATUS_CHANGES[activity.status]:
         raise conflict(
-            f"Status can't move from {activity.status.value.replace('_', ' ')} to {new.value.replace('_', ' ')}. "
-            "It can only move forward."
+            f"Status can't move from {activity.status.value.replace('_', ' ')} "
+            f"to {new.value.replace('_', ' ')}. "
+            "Move through the statuses in order."
         )
 
     end = None
@@ -324,6 +358,7 @@ def change_status(db: Session, user: User, activity: Activity, data: schemas.Sta
         end = data.end_date or business_today()
     elif data.end_date is not None:
         raise invalid("An end date can only be set when completing an activity.")
+
     _check_dates(activity.start_date, end, activity.follow_up_date, new)
 
     old = activity.status
@@ -332,7 +367,9 @@ def change_status(db: Session, user: User, activity: Activity, data: schemas.Sta
     activity.updated_by_id = user.id
     _log(db, activity, user, old, new)
     db.commit()
+
     return get_visible_activity(db, user, activity.id)
+
 
 
 def history(db: Session, activity: Activity) -> list[schemas.StatusHistoryOut]:

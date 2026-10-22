@@ -17,12 +17,21 @@ def test_create_defaults(clients, people):
     assert a["owner"]["id"] == str(people["ravi"].id)
     assert a["created_by_name"] == "Ravi Rep" and a["updated_by_name"] == "Ravi Rep"
     assert a["created_at"].endswith("Z") or "+00:00" in a["created_at"]     # UTC timestamps
-    assert a["permissions"] == {"can_edit": True, "can_change_status": False, "can_set_end_date": False}
+    assert a["permissions"] == {"can_edit": True, "can_change_status": True, "can_set_end_date": False}
 
+def test_only_admin_can_choose_initial_status(clients):
+    salesperson_response = clients["ravi"].post(
+        "/api/activities",
+        json=activity_payload("Salesperson Status Test", status="completed"),
+    )
+    assert salesperson_response.status_code == 403
 
-def test_status_cannot_be_chosen_when_creating(clients):
-    a = create_activity(clients["ravi"], status="completed")
-    assert a["status"] == "pending"
+    admin_response = clients["admin"].post(
+        "/api/activities",
+        json=activity_payload("Admin Status Test", status="completed"),
+    )
+    assert admin_response.status_code == 201
+    assert admin_response.json()["status"] == "completed"
 
 
 def test_create_validation(clients):
@@ -198,10 +207,34 @@ def test_managers_cannot_edit_their_teams_details(clients):
 
 def test_completed_activities_are_locked_for_everyone_but_admins(clients):
     a = create_activity(clients["ravi"])
-    assert clients["maya"].post(f"/api/activities/{a['id']}/status", json={"status": "completed"}).status_code == 200
-    locked = clients["ravi"].patch(f"/api/activities/{a['id']}", json={"notes": "late edit"})
-    assert locked.status_code == 403 and "admin" in locked.json()["detail"]
-    assert clients["admin"].patch(f"/api/activities/{a['id']}", json={"notes": "fixed"}).status_code == 200
+
+    # A manager must move the activity through each status.
+    assert clients["maya"].post(
+        f"/api/activities/{a['id']}/status",
+        json={"status": "in_progress"},
+    ).status_code == 200
+
+    assert clients["maya"].post(
+        f"/api/activities/{a['id']}/status",
+        json={"status": "completed"},
+    ).status_code == 200
+
+    # Non-admin users cannot reopen a completed activity.
+    assert clients["maya"].post(
+        f"/api/activities/{a['id']}/status",
+        json={"status": "pending"},
+    ).status_code == 403
+
+    assert clients["ravi"].post(
+        f"/api/activities/{a['id']}/status",
+        json={"status": "pending"},
+    ).status_code == 403
+
+    # Admins can reopen it.
+    assert clients["admin"].post(
+        f"/api/activities/{a['id']}/status",
+        json={"status": "pending"},
+    ).status_code == 200
 
 
 def test_admin_can_reassign_and_collisions_are_blocked(clients, people):

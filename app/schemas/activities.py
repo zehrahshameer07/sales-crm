@@ -26,6 +26,7 @@ class _ActivityFields(BaseModel):
 class ActivityCreate(_ActivityFields):
     customer_name: str = Field(..., min_length=2, max_length=120)
     activity_type: ActivityType
+    status: ActivityStatus = ActivityStatus.PENDING
     product_interested: Optional[Product] = None
     contact: Optional[str] = Field(None, max_length=20)
     location: Optional[str] = Field(None, max_length=120)

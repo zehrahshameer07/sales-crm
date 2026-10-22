@@ -14,10 +14,23 @@ def day(offset=0):
 
 
 def complete(client, activity, end=None):
+    started = client.post(
+        f"/api/activities/{activity['id']}/status",
+        json={"status": "in_progress"},
+    )
+    assert started.status_code == 200, started.text
+
     body = {"status": "completed"}
     if end:
         body["end_date"] = end
-    assert client.post(f"/api/activities/{activity['id']}/status", json=body).status_code == 200
+
+    response = client.post(
+        f"/api/activities/{activity['id']}/status",
+        json=body,
+    )
+    assert response.status_code == 200, response.text
+    return response
+
 
 
 def seed_data(clients):

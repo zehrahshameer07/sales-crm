@@ -28,8 +28,10 @@ class Product(str, Enum):
 
 
 # Status can only move forward. Completed is final.
+
 ALLOWED_STATUS_CHANGES = {
-    ActivityStatus.PENDING: {ActivityStatus.IN_PROGRESS, ActivityStatus.COMPLETED},
+    ActivityStatus.PENDING: {ActivityStatus.IN_PROGRESS},
     ActivityStatus.IN_PROGRESS: {ActivityStatus.COMPLETED},
     ActivityStatus.COMPLETED: set(),
 }
+

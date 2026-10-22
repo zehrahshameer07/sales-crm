@@ -13,11 +13,12 @@ def set_status(client, activity, status, **extra):
     return client.post(f"/api/activities/{activity['id']}/status", json={"status": status, **extra})
 
 
-def test_salespeople_cannot_change_status(clients):
-    a = create_activity(clients["ravi"])
-    r = set_status(clients["ravi"], a, "in_progress")
-    assert r.status_code == 403
-    assert clients["ravi"].get(f"/api/activities/{a['id']}").json()["status"] == "pending"
+def test_salespeople_can_change_their_own_status_only(clients):
+    own = create_activity(clients["ravi"], "Ravi Own")
+    others = create_activity(clients["rohan"], "Rohan Own")
+
+    assert set_status(clients["ravi"], own, "in_progress").status_code == 200
+    assert set_status(clients["ravi"], others, "in_progress").status_code == 404
 
 
 def test_manager_changes_status_for_their_team_only(clients):
@@ -38,17 +39,24 @@ def test_admin_can_change_any_status(clients):
     assert set_status(clients["admin"], a, "in_progress").status_code == 200
 
 
-def test_status_only_moves_forward(clients):
+def test_status_rules_for_admin_and_salesperson(clients):
     a = create_activity(clients["ravi"])
     admin = clients["admin"]
-    assert set_status(admin, a, "pending").status_code == 409            # same status
-    assert set_status(admin, a, "in_progress").status_code == 200
-    assert set_status(admin, a, "pending").status_code == 409            # backwards
-    assert set_status(admin, a, "in_progress").status_code == 409
+    salesperson = clients["ravi"]
+
+    # Admin can skip statuses and move backwards.
     assert set_status(admin, a, "completed").status_code == 200
-    for back in ("pending", "in_progress", "completed"):
-        r = set_status(admin, a, back)
-        assert r.status_code == 409
+    assert set_status(admin, a, "pending").status_code == 200
+    assert set_status(admin, a, "in_progress").status_code == 200
+    assert set_status(admin, a, "pending").status_code == 200
+
+    # A salesperson must follow the sequence.
+    assert set_status(salesperson, a, "completed").status_code == 409
+    assert set_status(salesperson, a, "in_progress").status_code == 200
+    assert set_status(salesperson, a, "pending").status_code == 409
+    assert set_status(salesperson, a, "completed").status_code == 200
+
+    # Invalid status values are rejected.
     assert set_status(admin, a, "done").status_code == 422
 
 
@@ -65,8 +73,19 @@ def test_completing_sets_the_end_date_to_today(clients):
 
 def test_completing_with_a_backdated_end_date(clients):
     a = create_activity(clients["ravi"], start_date=day(-5))
-    done = set_status(clients["maya"], a, "completed", end_date=day(-2)).json()
-    assert done["end_date"] == day(-2) and done["days_to_complete"] == 3
+
+    # Managers must move through In Progress before completing.
+    started = set_status(clients["maya"], a, "in_progress")
+    assert started.status_code == 200
+
+    response = set_status(
+        clients["maya"], a, "completed", end_date=day(-2)
+    )
+    assert response.status_code == 200
+
+    done = response.json()
+    assert done["end_date"] == day(-2)
+    assert done["days_to_complete"] == 3
 
 
 def test_end_date_rules_when_completing(clients):
@@ -98,11 +117,37 @@ def test_updated_fields_track_who_and_when(clients):
 
 def test_permission_flags_follow_the_role_and_state(clients):
     a = create_activity(clients["ravi"])
-    flags = lambda key: clients[key].get(f"/api/activities/{a['id']}").json()["permissions"]  # noqa: E731
-    assert flags("ravi") == {"can_edit": True, "can_change_status": False, "can_set_end_date": False}
-    assert flags("maya") == {"can_edit": False, "can_change_status": True, "can_set_end_date": False}
-    assert flags("admin") == {"can_edit": True, "can_change_status": True, "can_set_end_date": False}
-    set_status(clients["admin"], a, "completed")
+
+    def flags(key):
+        return clients[key].get(
+            f"/api/activities/{a['id']}"
+        ).json()["permissions"]
+
+    assert flags("ravi") == {
+        "can_edit": True,
+        "can_change_status": True,
+        "can_set_end_date": False,
+    }
+    assert flags("maya") == {
+        "can_edit": False,
+        "can_change_status": True,
+        "can_set_end_date": False,
+    }
+    assert flags("admin") == {
+        "can_edit": True,
+        "can_change_status": True,
+        "can_set_end_date": False,
+    }
+
+    # Complete the activity through the sequential workflow.
+    assert set_status(clients["ravi"], a, "in_progress").status_code == 200
+    assert set_status(clients["ravi"], a, "completed").status_code == 200
+
     assert flags("ravi")["can_edit"] is False
+    assert flags("ravi")["can_change_status"] is False
     assert flags("maya")["can_change_status"] is False
-    assert flags("admin") == {"can_edit": True, "can_change_status": False, "can_set_end_date": True}
+    assert flags("admin") == {
+        "can_edit": True,
+        "can_change_status": True,
+        "can_set_end_date": True,
+    }
