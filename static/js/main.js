@@ -4,7 +4,29 @@ import { isAdmin, isLead, state } from "./state.js";
 import { openActivityForm } from "./components/activity-form.js";
 import { avatar, field, h, icon, openDialog, roleBadge, toast } from "./ui.js";
 import { renderLogin } from "./pages/login.js";
+const THEME_KEY = "freebees-theme";
 
+function applyTheme(theme) {
+  if (theme === "light" || theme === "dark") {
+    document.documentElement.dataset.theme = theme;
+  } else {
+    delete document.documentElement.dataset.theme;
+  }
+}
+
+function toggleTheme() {
+  const current = document.documentElement.dataset.theme ||
+    (window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light");
+
+  const next = current === "dark" ? "light" : "dark";
+
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+}
+
+applyTheme(localStorage.getItem(THEME_KEY) || "system");
 const root = document.getElementById("root");
 const PAGES = {
   dashboard: { title: "Dashboard", icon: "home", load: () => import("./pages/dashboard.js") },
@@ -35,7 +57,15 @@ function changePasswordDialog({ forced = false } = {}) {
     const next = h("input", { id: "cp-new", class: "input", type: "password", autocomplete: "new-password" });
     const again = h("input", { id: "cp-again", class: "input", type: "password", autocomplete: "new-password" });
     const w = {
-      current: field(forced ? "Temporary password" : "Current password", current),
+      current: field(
+  forced ? "Temporary password" : "Current password",
+  current,
+  {
+    hint: forced
+      ? "Enter the temporary password provided by your administrator."
+      : "Enter the password you currently use to sign in. If you have forgotten it, contact an administrator for a reset."
+  }
+),
       next: field("New password", next, { hint: `At least ${state.config.password_min_length || 10} characters with letters and numbers.` }),
       again: field("Repeat new password", again),
     };
@@ -75,6 +105,17 @@ function userMenu() {
       u.region && [h("dt", { text: "Region" }), h("dd", { text: u.region })],
       u.manager_name && [h("dt", { text: "Reports to" }), h("dd", { text: u.manager_name })]),
     h("hr"),
+    h("button", {
+  class: "menu-item",
+  type: "button",
+  role: "menuitem",
+  on: {
+    click: () => {
+      toggleTheme();
+      panel.hidden = true;
+    }
+  }
+}, icon("sun"), "Toggle light / dark mode"),
     h("button", { class: "menu-item", type: "button", role: "menuitem", on: { click: () => { panel.hidden = true; changePasswordDialog(); } } }, icon("key"), "Change password"),
     h("button", { class: "menu-item", type: "button", role: "menuitem", on: { click: logout } }, icon("logout"), "Log out"));
   const button = h("button", { class: "btn icon-only", type: "button", "aria-label": "Account menu", "aria-haspopup": "true", "aria-expanded": "false",

@@ -11,6 +11,17 @@ export async function render(root, ctx) {
     Object.assign(filters, { search: "", status: "", activity_type: "", period: "all", owner_id: "", follow_up: "", page: 1 }, state.activityPreset);
     state.activityPreset = null;
   }
+  // Clear an employee filter that is not available to the current user.
+const allowedOwnerIds = new Set(
+  state.options.map((person) => String(person.id))
+);
+
+if (
+  filters.owner_id &&
+  !allowedOwnerIds.has(String(filters.owner_id))
+) {
+  filters.owner_id = "";
+}
 
   const search = h("input", { class: "input", type: "search", placeholder: "Search restaurant or customer", "aria-label": "Search", value: filters.search });
   const status = select("flt-status", [["", "Any status"], ...Object.entries(STATUS)], filters.status);

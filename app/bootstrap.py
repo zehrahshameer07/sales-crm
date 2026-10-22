@@ -3,6 +3,7 @@ import logging
 import random
 from datetime import datetime, time, timedelta, timezone
 from pathlib import Path
+import os
 
 from alembic import command
 from alembic.config import Config
@@ -67,37 +68,118 @@ DEMO_PASSWORD = "Demo@12345"
 DEMO_DOMAIN = "freebees-demo.com"
 
 DEMO_USERS = [
-    {"key": "admin", "name": "Aarav Sharma", "role": "admin", "email": f"admin@{DEMO_DOMAIN}",
-     "region": "Head office", "designation": "Operations Head", "manager": None},
-    {"key": "priya", "name": "Priya Nair", "role": "manager", "email": f"priya.nair@{DEMO_DOMAIN}",
-     "region": "Bengaluru South", "designation": "Regional Sales Manager", "manager": "admin"},
-    {"key": "rahul", "name": "Rahul Menon", "role": "manager", "email": f"rahul.menon@{DEMO_DOMAIN}",
-     "region": "Bengaluru North", "designation": "Regional Sales Manager", "manager": "admin"},
-    {"key": "ananya", "name": "Ananya Rao", "role": "salesperson", "email": f"ananya.rao@{DEMO_DOMAIN}",
-     "region": "Koramangala", "designation": "Sales Executive", "manager": "priya"},
-    {"key": "karthik", "name": "Karthik Shetty", "role": "salesperson", "email": f"karthik.shetty@{DEMO_DOMAIN}",
-     "region": "Jayanagar", "designation": "Sales Executive", "manager": "priya"},
-    {"key": "meera", "name": "Meera Iyer", "role": "salesperson", "email": f"meera.iyer@{DEMO_DOMAIN}",
-     "region": "HSR Layout", "designation": "Sales Executive", "manager": "priya"},
-    {"key": "vikram", "name": "Vikram Hegde", "role": "salesperson", "email": f"vikram.hegde@{DEMO_DOMAIN}",
-     "region": "Indiranagar", "designation": "Sales Executive", "manager": "rahul"},
-    {"key": "sneha", "name": "Sneha Kulkarni", "role": "salesperson", "email": f"sneha.kulkarni@{DEMO_DOMAIN}",
-     "region": "Whitefield", "designation": "Sales Executive", "manager": "rahul"},
-    {"key": "arjun", "name": "Arjun Reddy", "role": "salesperson", "email": f"arjun.reddy@{DEMO_DOMAIN}",
-     "region": "Malleshwaram", "designation": "Sales Executive", "manager": "rahul"},
+    {
+        "key": "admin",
+        "name": "Aarav Sharma",
+        "role": "admin",
+        "email": f"admin@{DEMO_DOMAIN}",
+        "region": "Head office",
+        "designation": "Operations Head",
+        "manager": None,
+    },
+    {
+        "key": "priya",
+        "name": "Priya Nair",
+        "role": "manager",
+        "email": f"priya.nair@{DEMO_DOMAIN}",
+        "region": "Kochi Central",
+        "designation": "Regional Sales Manager",
+        "manager": "admin",
+    },
+    {
+        "key": "rahul",
+        "name": "Rahul Menon",
+        "role": "manager",
+        "email": f"rahul.menon@{DEMO_DOMAIN}",
+        "region": "Kochi North",
+        "designation": "Regional Sales Manager",
+        "manager": "admin",
+    },
+    {
+        "key": "ananya",
+        "name": "Ananya Rao",
+        "role": "salesperson",
+        "email": f"ananya.rao@{DEMO_DOMAIN}",
+        "region": "Fort Kochi",
+        "designation": "Sales Executive",
+        "manager": "priya",
+    },
+    {
+        "key": "karthik",
+        "name": "Karthik Shetty",
+        "role": "salesperson",
+        "email": f"karthik.shetty@{DEMO_DOMAIN}",
+        "region": "Kakkanad",
+        "designation": "Sales Executive",
+        "manager": "priya",
+    },
+    {
+        "key": "meera",
+        "name": "Meera Iyer",
+        "role": "salesperson",
+        "email": f"meera.iyer@{DEMO_DOMAIN}",
+        "region": "Edappally",
+        "designation": "Sales Executive",
+        "manager": "priya",
+    },
+    {
+        "key": "vikram",
+        "name": "Vikram Hegde",
+        "role": "salesperson",
+        "email": f"vikram.hegde@{DEMO_DOMAIN}",
+        "region": "Panampilly Nagar",
+        "designation": "Sales Executive",
+        "manager": "rahul",
+    },
+    {
+        "key": "sneha",
+        "name": "Sneha Kulkarni",
+        "role": "salesperson",
+        "email": f"sneha.kulkarni@{DEMO_DOMAIN}",
+        "region": "Vyttila",
+        "designation": "Sales Executive",
+        "manager": "rahul",
+    },
+    {
+        "key": "arjun",
+        "name": "Arjun Reddy",
+        "role": "salesperson",
+        "email": f"arjun.reddy@{DEMO_DOMAIN}",
+        "region": "Thrippunithura",
+        "designation": "Sales Executive",
+        "manager": "rahul",
+    },
 ]
 
 RESTAURANTS = [
-    "Spice Garden", "Tandoor Tales", "Cafe Brew House", "Dosa Corner", "Biryani Junction", "Green Leaf Bistro",
-    "The Coffee Lab", "Pizza Palace", "Chai Point Corner", "Meghana Foods", "Truffles Cafe", "Udupi Residency",
-    "Toit Taproom", "Smoke House Deli", "Vidyarthi Bhavan", "CTR Dosa House", "Empire Kitchen", "Nagarjuna Meals",
-    "Barbeque Nation", "Mavalli Tiffin Room", "Third Wave Coffee", "Corner House", "Church Street Social",
-    "Beijing Bites", "Taco Fiesta", "Kerala Kitchen", "Punjabi Dhaba", "Sagar Fast Food", "Rameshwaram Cafe",
+    "Harbour Table",
+    "Cochin Spice House",
+    "Backwater Cafe",
+    "Malabar Kitchen",
+    "Coconut Grove Bistro",
+    "Fort Kochi Cafe",
+    "Pepper Route Kitchen",
+    "Seaside Diner",
+    "Kakkanad Food Studio",
+    "Metro Bites",
+    "Palm Grove Restaurant",
+    "The Kochi Coffee Room",
 ]
-LOCATIONS = ["Indiranagar", "Koramangala", "HSR Layout", "Jayanagar", "Whitefield", "Malleshwaram", "Basavanagudi",
-             "MG Road", "JP Nagar", "Marathahalli"]
+
+LOCATIONS = [
+    "Fort Kochi",
+    "Kakkanad",
+    "Edappally",
+    "Panampilly Nagar",
+    "Kaloor",
+    "Vyttila",
+    "Palarivattom",
+    "MG Road, Kochi",
+    "Marine Drive, Kochi",
+    "Thrippunithura",
+]
 NOTES = [
-    "Owner liked the video menu", "Asked for pricing details", "Wants a Kannada and English menu",
+    "Owner liked the video menu", "Asked for pricing details", "Wants a Malayalam and English menu",
     "Manager will decide next week", "Interested in game rewards for diners", "Signed up for a trial",
     "Needs a demo for the head chef", "Busy lunch hour, call after 3 pm", "Sent the proposal on WhatsApp",
     "Wants to compare with another vendor",
@@ -112,7 +194,7 @@ def _at(day, hour: int, minute: int) -> datetime:
 
 
 def seed_demo(db: Session) -> bool:
-    """Create demo accounts and sample activities. Does nothing if users already exist."""
+    """Create demo accounts and sample activities when the database is empty."""
     if db.scalar(select(User.id).limit(1)) is not None:
         return False
 
@@ -211,7 +293,9 @@ def seed_demo(db: Session) -> bool:
 def startup() -> None:
     if settings.auto_migrate:
         run_migrations()
+
     with SessionLocal() as db:
-        bootstrap_admin(db)
         if settings.seed_demo:
             seed_demo(db)
+
+        bootstrap_admin(db)
