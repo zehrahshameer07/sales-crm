@@ -33,7 +33,7 @@ export async function render(root, ctx) {
         h("div", { class: "td num", "data-label": "Avg days", text: r.avg_days_to_complete === null ? "–" : String(r.avg_days_to_complete) }),
         h("div", { class: "td num", "data-label": "Overdue" }, r.follow_ups_overdue ? h("span", { class: "chip bad", text: String(r.follow_ups_overdue) }) : "0")))
         : emptyState("Nobody here yet", "Team members appear once an admin assigns them to you."));
-    body.replaceChildren(card(null, table));
+    body.replaceChildren(card("", table));
   } catch (error) {
     body.replaceChildren(h("div", { class: "card" }, h("p", { class: "error-text", text: errorText(error) })));
   }

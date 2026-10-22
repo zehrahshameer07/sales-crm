@@ -177,21 +177,46 @@ export function toast(message, type = "ok") {
   setTimeout(() => node.remove(), type === "error" ? 6000 : 3200);
 }
 
+
 export function openDialog({ title, body, footer = [], dismissible = true }) {
   const dialog = h("dialog", { class: "modal", "aria-label": title });
   const close = () => dialog.close();
-  dialog.append(
-    h("div", { class: "modal-head" }, h("h2", { text: title }),
-      dismissible && h("button", { class: "btn sm icon-only", type: "button", "aria-label": "Close", on: { click: close } }, icon("x"))),
-    h("div", { class: "modal-body" }, body),
-    footer.length ? h("div", { class: "modal-foot" }, footer) : null);
+
+  const children = [
+    h("div", { class: "modal-head" },
+      h("h2", { text: title }),
+      dismissible && h("button", {
+        class: "btn sm icon-only",
+        type: "button",
+        "aria-label": "Close",
+        on: { click: close }
+      }, icon("x"))
+    ),
+    h("div", { class: "modal-body" }, body)
+  ];
+
+  if (footer.length) {
+    children.push(h("div", { class: "modal-foot" }, footer));
+  }
+
+  dialog.append(...children);
+
   dialog.addEventListener("close", () => dialog.remove());
-  if (dismissible) dialog.addEventListener("click", (e) => { if (e.target === dialog) close(); });
-  else dialog.addEventListener("cancel", (e) => e.preventDefault());
+
+  if (dismissible) {
+    dialog.addEventListener("click", (e) => {
+      if (e.target === dialog) close();
+    });
+  } else {
+    dialog.addEventListener("cancel", (e) => e.preventDefault());
+  }
+
   document.body.append(dialog);
   dialog.showModal();
+
   return { dialog, close };
 }
+
 
 export function confirmDialog({ title, message, confirmText = "Confirm", danger = false }) {
   return new Promise((resolve) => {

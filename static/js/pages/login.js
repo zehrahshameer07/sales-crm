@@ -22,24 +22,28 @@ export function renderLogin(root, { onLoggedIn, notice }) {
     placeholder: "Enter your password"
   });
 
-  const passwordWrap = h("div", { class: "login-password-wrap" },
-    password,
-    h("button", {
-      class: "login-password-toggle",
-      type: "button",
-      "aria-label": "Show password",
-      on: {
-        click: (event) => {
-          const visible = password.type === "password";
-          password.type = visible ? "text" : "password";
-          event.currentTarget.setAttribute(
-            "aria-label",
-            visible ? "Hide password" : "Show password"
-          );
-          event.currentTarget.textContent = visible ? "Hide" : "Show";
-        }
+  const passwordToggle = h("button", {
+    class: "login-password-toggle",
+    type: "button",
+    "aria-label": "Show password",
+    on: {
+      click: (event) => {
+        const visible = password.type === "password";
+        password.type = visible ? "text" : "password";
+        event.currentTarget.setAttribute(
+          "aria-label",
+          visible ? "Hide password" : "Show password"
+        );
+        event.currentTarget.textContent = visible ? "Hide" : "Show";
       }
-    }, "Show")
+    }
+  }, "Show");
+
+  const passwordWrap = h(
+    "div",
+    { class: "login-password-wrap" },
+    password,
+    passwordToggle
   );
 
   const error = h("div", {
@@ -51,17 +55,24 @@ export function renderLogin(root, { onLoggedIn, notice }) {
   const submit = h("button", {
     class: "btn primary block login-submit",
     type: "submit",
-    text: "Log in"
+    text: "Sign in"
   });
 
   const infoBox = notice
-    ? h("div", { class: "callout" }, icon("alert"), h("span", { text: notice }))
+    ? h(
+        "div",
+        { class: "callout" },
+        icon("alert"),
+        h("span", { text: notice })
+      )
     : null;
 
-  const form = h("form", { class: "stack login-form", novalidate: true },
+  const form = h(
+    "form",
+    { class: "stack login-form", novalidate: true },
     infoBox,
     error,
-    field("Email", email),
+    field("Work email", email),
     field("Password", passwordWrap),
     submit
   );
@@ -77,7 +88,7 @@ export function renderLogin(root, { onLoggedIn, notice }) {
     }
 
     submit.disabled = true;
-    submit.textContent = "Signing in…";
+    submit.textContent = "Signing in...";
 
     try {
       const user = await api("/api/auth/login", {
@@ -93,59 +104,69 @@ export function renderLogin(root, { onLoggedIn, notice }) {
       error.hidden = false;
       error.textContent =
         e instanceof ApiError && e.status === 429 && e.retryAfter
-          ? `${errorText(e)} (Retry in about ${Math.ceil(Number(e.retryAfter) / 60)} min.)`
+          ? `${errorText(e)} (Retry in about ${Math.ceil(
+              Number(e.retryAfter) / 60
+            )} min.)`
           : errorText(e);
 
       password.value = "";
       password.focus();
       submit.disabled = false;
-      submit.textContent = "Log in";
+      submit.textContent = "Sign in";
     }
   });
 
   const demo = state.config.demo_accounts || [];
+  console.log("Demo accounts:", demo);
 
   const demoDetails = demo.length
-    ? h("details", { class: "demo-box login-demo" },
-        h("summary", { class: "demo-summary" },
-          h("span", {},
-            h("span", { class: "strong", text: "Quick demo access" }),
-            h("span", {
-              class: "tiny muted",
-              text: "Use a sample account to explore the CRM"
-            })
-          ),
-          h("span", { class: "demo-chevron", "aria-hidden": "true" }, "⌄")
+    ? h(
+        "section",
+        { class: "demo-box login-demo login-demo-visible" },
+        h("div", { class: "login-demo-heading" },
+          h("strong", { text: "Demo accounts" }),
+          h("span", {
+            class: "tiny muted",
+            text: "Choose a role to try the CRM"
+          })
         ),
-        h("div", { class: "demo-list" },
-          demo.map((a) =>
-            h("div", { class: "demo-row" },
-              h("div", { class: "demo-account-info" },
+        h(
+          "div",
+          { class: "demo-list" },
+          demo.map((account) =>
+            h(
+              "div",
+              { class: "demo-row" },
+              h(
+                "div",
+                { class: "demo-account-info" },
                 h("span", {
                   class: "strong",
-                  text: a.role[0].toUpperCase() + a.role.slice(1)
+                  text: account.role
+                    ? account.role[0].toUpperCase() + account.role.slice(1)
+                    : "Demo user"
                 }),
                 h("span", {
                   class: "tiny muted demo-email",
-                  text: a.email
+                  text: account.email
                 })
               ),
               h("button", {
                 class: "btn demo-use",
                 type: "button",
-                text: "Use",
+                text: "Use account",
                 on: {
                   click: () => {
-                    email.value = a.email;
-                    password.value = a.password;
+                    email.value = account.email;
+                    password.value = account.password || "";
                     password.type = "password";
-                    passwordWrap.querySelector("button").textContent = "Show";
-                    passwordWrap.querySelector("button").setAttribute(
+                    passwordToggle.textContent = "Show";
+                    passwordToggle.setAttribute(
                       "aria-label",
                       "Show password"
                     );
                     error.hidden = true;
-                    password.focus();
+                    email.focus();
                   }
                 }
               })
@@ -155,33 +176,165 @@ export function renderLogin(root, { onLoggedIn, notice }) {
       )
     : null;
 
-  root.replaceChildren(
-    h("div", { class: "login login-modern" },
-      h("div", { class: "card login-card login-card-modern" },
-        h("div", { class: "login-brand" },
-          h("div", { class: "brand-mark" }, icon("chart", "lg")),
-          h("div", {},
-            h("div", { class: "login-brand-name", text: "FreeBees" }),
-            h("div", { class: "login-brand-subtitle", text: "SALES CRM" })
-          )
-        ),
-        h("div", { class: "login-heading" },
-          h("div", { class: "login-eyebrow", text: "YOUR SALES WORKSPACE" }),
-          h("h1", { text: "Welcome back" }),
-          h("p", {
-            class: "muted",
-            text: "Sign in to manage your team and track your sales activities."
+  const showcase = h(
+    "aside",
+    {
+      class: "login-showcase",
+      "aria-label": "FreeBees sales workspace"
+    },
+    h("div", { class: "login-showcase-top" },
+      h("div", { class: "login-brand" },
+        h("div", { class: "brand-mark" }, icon("chart", "lg")),
+        h("div", {},
+          h("div", {
+            class: "login-brand-name",
+            text: "FreeBees"
+          }),
+          h("div", {
+            class: "login-brand-subtitle",
+            text: "SALES CRM"
+          })
+        )
+      ),
+      h("span", {
+        class: "login-workspace-tag",
+        text: "YOUR WORKSPACE"
+      })
+    ),
+
+    h("div", { class: "login-showcase-copy" },
+      h("h1", {},
+        "Every relationship,",
+        h("br", {}),
+        h("span", {
+          class: "login-accent-text",
+          text: "moving forward."
+        })
+      ),
+      h("p", {
+        text: "Keep customer conversations, daily activities and follow-ups organised in one place."
+      })
+    ),
+
+    h("div", {
+      class: "login-visual",
+      "aria-hidden": "true"
+    },
+      h("div", { class: "login-visual-heading" },
+        h("div", {},
+          h("span", {
+            class: "login-visual-kicker",
+            text: "SALES OVERVIEW"
+          }),
+          h("div", {
+            class: "login-visual-title",
+            text: "Your team's momentum"
           })
         ),
-        form,
-        demoDetails,
-        h("p", {
-          class: "login-footer",
-          text: "FreeBees Sales CRM · Secure team access"
-        })
+        h("span", { class: "login-visual-dots" }, "•••")
+      ),
+
+      h("div", { class: "login-visual-metrics" },
+        h("div", { class: "login-visual-metric" },
+          h("span", { text: "Activities" }),
+          h("strong", { text: "Track" }),
+          h("span", {
+            class: "login-metric-note",
+            text: "Daily progress"
+          })
+        ),
+        h("div", { class: "login-visual-metric" },
+          h("span", { text: "Follow-ups" }),
+          h("strong", { text: "Connect" }),
+          h("span", {
+            class: "login-metric-note",
+            text: "Stay on track"
+          })
+        )
+      ),
+
+      h("div", { class: "login-chart-card" },
+        h("div", { class: "login-chart-heading" },
+          h("span", { text: "Activity at a glance" }),
+          h("span", {
+            class: "login-chart-label",
+            text: "WEEKLY"
+          })
+        ),
+
+        h(
+          "div",
+          { class: "login-chart" },
+          ...[32, 52, 40, 72, 48, 86, 62].map((height, index) =>
+            h("div", { class: "login-chart-column" },
+              h("span", {
+                class: `login-chart-bar${
+                  index === 5 ? " is-highlighted" : ""
+                }`,
+                style: { height: `${height}%` }
+              })
+            )
+          )
+        ),
+
+        h(
+          "div",
+          { class: "login-chart-days" },
+          ...["M", "T", "W", "T", "F", "S", "S"].map((day) =>
+            h("span", { text: day })
+          )
+        )
       )
+    ),
+
+    h("div", { class: "login-showcase-bottom" },
+      h("span", { class: "login-status-dot" }),
+      h("span", {
+        text: "One workspace. A clearer view of every next step."
+      })
     )
   );
 
-  email.focus();
+  const loginPanel = h(
+    "section",
+    {
+      class: "login-panel",
+      "aria-label": "Sign in"
+    },
+    h("div", { class: "login-panel-inner" },
+
+      h("div", { class: "login-mobile-brand" },
+        h("div", { class: "brand-mark" }, icon("chart", "lg")),
+        h("span", {
+          class: "login-brand-name",
+          text: "FreeBees"
+        })
+      ),
+
+      h("div", { class: "login-heading" },
+        h("h2", { text: "Sign in to your account" }),
+        h("p", {
+          class: "muted",
+          text: "Enter your details to access your sales workspace."
+        })
+      ),
+
+      form,
+      demoDetails,
+
+      h("p", {
+        class: "login-footer",
+        text: "FreeBees Sales CRM · Secure team access"
+      })
+    )
+  );
+
+  root.replaceChildren(
+    h(
+      "div",
+      { class: "login login-modern login-split" },
+      showcase,
+      loginPanel
+    )
+  );
 }

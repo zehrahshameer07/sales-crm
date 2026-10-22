@@ -16,6 +16,21 @@ function greeting() {
 
 export async function render(root, ctx) {
   const user = state.user;
+if (!user) {
+  root.replaceChildren(h("div", { class: "page" },
+    h("div", { class: "card" },
+      h("h2", { text: "Your session has expired" }),
+      h("p", { class: "muted", text: "Please sign in again to continue." }),
+      h("button", {
+        class: "btn primary",
+        type: "button",
+        text: "Go to sign in",
+        on: { click: () => { window.location.hash = "#login"; } }
+      })
+    )
+  ));
+  return;
+}
   const body = h("div", { class: "stack" }, skeletons(2, 120));
   const seg = h("div", { class: "seg", role: "group", "aria-label": "Period" }, PERIODS.map(([value, label]) =>
     h("button", { type: "button", "aria-pressed": String(value === period), text: label, on: { click: () => { period = value; render(root, ctx); } } })));
